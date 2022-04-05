@@ -12,12 +12,14 @@ def loadSeedNodes():
 def broadcastMessage(message):
     stx = ascii(2).encode(FORMAT) #Encode Start Transaction
     cmd = message.encode(FORMAT) #Encode command.
-    cmd_len = str(len(cmd)).encode(FORMAT) #Encode length of encoded command. 
+    cmd_len = len(cmd).to_bytes(1, byteorder='big') #Convert length of encoded command into bytes.
     etx = ascii(3).encode(FORMAT) #Encode End Transaction
     s.send(stx)
     s.send(cmd_len)
     s.send(cmd)
     s.send(etx)
+    #msg = bytearray(stx, cmd_len, cmd, etx)
+    #s.send(msg)
 
 def processIncomingMessages():
     data, addr = s.recvfrom(1024)
@@ -30,5 +32,6 @@ seedNodes = loadSeedNodes()
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((seedNodes.IP[0], seedNodes.Port[0]))
 
-processIncomingMessages()
-broadcastMessage("UprootTheSystem")
+#processIncomingMessages()
+broadcastMessage("h")
+

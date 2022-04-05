@@ -3,7 +3,10 @@ import pandas
 import time 
 import sys
 import threading
-#import getopt
+
+#Local module imports
+import state
+import protocol
 
 HEADER = 1
 FORMAT = 'utf-8'
@@ -23,24 +26,26 @@ def handleUserActions(clientsocket, address):
     while connected:
         try:
             stx = clientsocket.recv(HEADER).decode(FORMAT)
-            cmd_len = clientsocket.recv(HEADER).decode(FORMAT)
-            cmd = clientsocket.recv(int(cmd_len)).decode(FORMAT)
-            etx = clientsocket.recv(HEADER).decode(FORMAT) 
-            #msg = clientsocket.recv(HEADER).decode(FORMAT)
-            #msgList = msg.split()              
-            #stx = str(msgList[0])
-            #cmd_len = str(msgList[1])
-            #cmd = str(msgList[2])
-            #etx = str(msgList[3])       
+            cmd_len = int.from_bytes(clientsocket.recv(HEADER), byteorder='big')
+            cmd = clientsocket.recv(cmd_len).decode(FORMAT)
+            etx = clientsocket.recv(HEADER).decode(FORMAT)
         except:
             print("Error interpretting message protocol.")
             sys.exit()   
             
-        print(f'Message: {stx} {cmd_len} {cmd} {etx}')
+        #print(f'Message: {stx} {cmd_len} {cmd} {etx}')
 
         if stx != "2": print(f"Invalid input for <STX>"); sys.exit()  
                 
-        #Insert switch statement for cmd
+        switch={
+            'n': state.addTransaction(protocol.highest_trn() + 1, 'mj', 'je', time.time()),
+            'h': print(protocol.highest_trn()),
+        #    'm': highest_trn_res(),
+            'g': state.getTransaction('3'),
+        #    'o': ok_msg(),
+        #    'f': nok_msg()
+        }
+        switch.get(cmd, "Invalid cmd for switch")
 
         if (etx == '3'): connected = False
     clientsocket.close()
@@ -65,6 +70,7 @@ print(f'Listening on {seedNodes.IP[0]}:{seedNodes.Port[0]}')
 
 #Receive messages.
 while True:
+    state.init()
     verifyInput()
     clientsocket, address = s.accept()
     #Broadcast message
