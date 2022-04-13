@@ -42,8 +42,8 @@ def handleUserActions(clientsocket, address):
             'h': print(protocol.highest_trn()),
         #    'm': highest_trn_res(),
             'g': state.getTransaction('3'),
-        #    'o': ok_msg(),
-        #    'f': nok_msg()
+            'o': state.ok_msg(),
+            'f': state.nok_msg()
         }
         switch.get(cmd, "Invalid cmd for switch")
 
