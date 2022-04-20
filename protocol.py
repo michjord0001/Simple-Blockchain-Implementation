@@ -1,7 +1,51 @@
 import time
+from weakref import finalize
 import pandas 
+import sys
 
-#def processMessage(data):
+#Local module imports
+import state
+HEADER = 1
+FORMAT = 'utf-8'
+
+def newTrans(cmd):
+        try:
+                trn = highest_trn() + 1
+                fromUser = cmd[1:3]
+                toUser = cmd[3:5]
+                trnTime = time.time()
+                state.addTransaction(trn, fromUser, toUser, trnTime)
+                state.ok_msg() 
+
+        except:
+                print("Error adding new transaction.\n")
+                state.nok_msg() 
+
+def highest_trn():
+        transactions = pandas.read_csv('transactions.csv', usecols=['trn', 'fromUser', 'toUser', 'trnTime'])
+        highestTrn = transactions['trn'].max()
+        return highestTrn
+
+def highest_trn_res(trn):
+        try:
+                highestTrn = int(highest_trn())
+                return highestTrn.to_bytes(2, byteorder='big')
+        except:
+                print("Error encoding highest_trn")
+
+def processMessage(clientsocket):
+        try:
+                stx = clientsocket.recv(HEADER).decode(FORMAT)
+                cmd_len = int.from_bytes(clientsocket.recv(HEADER), byteorder='big')
+                cmd = clientsocket.recv(cmd_len).decode(FORMAT)
+                etx = clientsocket.recv(HEADER).decode(FORMAT)
+        except:
+                print("Error interpretting message protocol.")
+                sys.exit()   
+                        
+        #print(f'Message: {stx} {cmd_len} {cmd} {etx}')
+
+        return stx,cmd_len,cmd,etx
 
 '''
 def createMessage(message):
@@ -16,8 +60,3 @@ def createMessage(message):
 
         return msg 
 '''
-
-def highest_trn():
-        transactions = pandas.read_csv('transactions.csv', usecols=['trn', 'fromUser', 'toUser', 'trnTime'])
-        highestTrn = transactions['trn'].max()
-        return highestTrn

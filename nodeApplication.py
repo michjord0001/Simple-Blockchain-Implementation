@@ -16,51 +16,46 @@ def loadSeedNodes():
     return(df)
 
 def scheduleNextMessage(clientsocket, address):
-    clientsocket.send(bytes("System", FORMAT))
+    #clientsocket.send(bytes("System", FORMAT))
     time.sleep(5)
 
 def handleUserActions(clientsocket, address):
     print(f"Connected with {address[0]}:{address[1]}")
     
     connected = True
-    while connected:
-        try:
-            stx = clientsocket.recv(HEADER).decode(FORMAT)
-            cmd_len = int.from_bytes(clientsocket.recv(HEADER), byteorder='big')
-            cmd = clientsocket.recv(cmd_len).decode(FORMAT)
-            etx = clientsocket.recv(HEADER).decode(FORMAT)
-        except:
-            print("Error interpretting message protocol.")
-            sys.exit()   
-            
-        #print(f'Message: {stx} {cmd_len} {cmd} {etx}')
+    while connected:     
+        stx, cmd_len, cmd, etx = protocol.processMessage(clientsocket)
+        #print(f'Message: {stx} {cmd_len} {cmd} {etx}') 
 
+        #STX
         if stx != "2": print(f"Invalid input for <STX>"); sys.exit()  
-                
-        switch={
-            'n': state.addTransaction(protocol.highest_trn() + 1, 'mj', 'je', time.time()),
-            'h': print(protocol.highest_trn()),
-        #    'm': highest_trn_res(),
-            'g': state.getTransaction('3'),
-            'o': state.ok_msg(),
-            'f': state.nok_msg()
-        }
-        switch.get(cmd, "Invalid cmd for switch")
 
-        if (etx == '3'): connected = False
+        #CMD
+        if (cmd[0] == 'n'): protocol.newTrans(cmd)
+        if (cmd[0] == 'h'): print("m" + str(protocol.highest_trn()))
+        if (cmd[0] == 'm'): print(protocol.highest_trn_res(protocol.highest_trn()))
+        if (cmd[0] == 'g'): print(state.getTransaction(cmd[1:3]))
+        if (cmd[0] == 'o'): state.ok_msg()
+        if (cmd[0] == 'f'): state.nok_msg()
+        
+        #ETX
+        if (etx == '3'): connected=False
+     
     clientsocket.close()
 
+    
 #Protocol design (i): Require username argument. 
-def verifyInput():
-    if(len(sys.argv) < 2):
-        print("Require username argument.") 
-        sys.exit()
-    if(len(sys.argv[1]) > 2):
-        print("Invalid username length.") 
+def inputUsername():
+    usr = input("Enter your username: ")
+
+    if(len(usr) < 2 or len(usr) > 2):
+        print("Invalid username input. ") 
         sys.exit()
 
 #Load servers and ports
 seedNodes = loadSeedNodes()
+
+usr = inputUsername()
 
 #Create socket, bind and listen. 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -71,7 +66,6 @@ print(f'Listening on {seedNodes.IP[0]}:{seedNodes.Port[0]}')
 #Receive messages.
 while True:
     state.init()
-    verifyInput()
     clientsocket, address = s.accept()
     #Broadcast message
     scheduleNextMessage(clientsocket, address)
@@ -79,5 +73,4 @@ while True:
     #Thread connections from clients
     thread = threading.Thread(target=handleUserActions, args=(clientsocket, address))
     thread.start()
-
 

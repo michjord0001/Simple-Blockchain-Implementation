@@ -2,15 +2,18 @@ import time
 import pandas 
 
 trnCols = ['trn', 'fromUser', 'toUser', 'trnTime']
+balCols = ['user', 'balance', 'lastTrnTime']
 transactions = pandas.read_csv('transactions.csv', usecols=trnCols)
+balances = pandas.read_csv('balances.csv', usecols=balCols)
 userInitials = []
 
 def init():
     transactions = pandas.read_csv('transactions.csv', usecols=trnCols)
+    balances = pandas.read_csv('balances.csv', usecols=balCols)
 
 def getTransaction(trn):
     transactions = pandas.read_csv('transactions.csv', usecols=trnCols)
-    print(transactions.loc[transactions['trn'] == int(trn)])
+    return(transactions.loc[transactions['trn'] == int(trn)])
 
 def addTransaction(trn, fromUser, toUser, trnTime):
     transactions = pandas.read_csv('transactions.csv', usecols=trnCols)

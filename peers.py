@@ -18,8 +18,6 @@ def broadcastMessage(message):
     s.send(cmd_len)
     s.send(cmd)
     s.send(etx)
-    #msg = bytearray(stx, cmd_len, cmd, etx)
-    #s.send(msg)
 
 def processIncomingMessages():
     data, addr = s.recvfrom(1024)
@@ -33,5 +31,6 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((seedNodes.IP[0], seedNodes.Port[0]))
 
 #processIncomingMessages()
-broadcastMessage("h")
+cmd = input("Enter cmd: ")
+broadcastMessage(cmd) 
 
