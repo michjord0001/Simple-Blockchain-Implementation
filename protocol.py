@@ -1,9 +1,10 @@
+#External Modules
 import time
-from weakref import finalize
 import pandas 
 import sys
+#from weakref import finalize
 
-#Local module imports
+#Local Modules
 import state
 HEADER = 1
 FORMAT = 'utf-8'
@@ -14,11 +15,12 @@ def newTrans(cmd):
                 fromUser = cmd[1:3]
                 toUser = cmd[3:5]
                 trnTime = time.time()
-                state.addTransaction(trn, fromUser, toUser, trnTime)
-                state.ok_msg() 
-
+                approved = cmd[5]
+                approveTrn = cmd[6:8]
+                state.addTransaction(trn, fromUser, toUser, trnTime, approved, approveTrn)
+                state.ok_msg()
         except:
-                print("Error adding new transaction.\n")
+                print("Error adding new transaction.")
                 state.nok_msg() 
 
 def highest_trn():

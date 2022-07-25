@@ -1,19 +1,27 @@
+#External Modules
 import socket   
 import pandas
 import time 
 import sys
 import threading
 
-#Local module imports
+#Local Modules
 import state
 import protocol
+import wallet
+import miner 
 
 HEADER = 1
 FORMAT = 'utf-8'
 
+def init():
+    state.init()
+    wallet.init()
+#    miner.init()
+
 def loadSeedNodes():
     df = pandas.read_csv('seedNodes.csv', usecols=['IP', 'Port'])
-    return(df)
+    return(df)  
 
 def scheduleNextMessage(clientsocket, address):
     #clientsocket.send(bytes("System", FORMAT))
@@ -31,12 +39,13 @@ def handleUserActions(clientsocket, address):
         if stx != "2": print(f"Invalid input for <STX>"); sys.exit()  
 
         #CMD
-        if (cmd[0] == 'n'): protocol.newTrans(cmd)
-        if (cmd[0] == 'h'): print("m" + str(protocol.highest_trn()))
-        if (cmd[0] == 'm'): print(protocol.highest_trn_res(protocol.highest_trn()))
-        if (cmd[0] == 'g'): print(state.getTransaction(cmd[1:3]))
-        if (cmd[0] == 'o'): state.ok_msg()
+        if (cmd[0] == 'c'): print("{\'blocks\':",state.blockCount,"}")
         if (cmd[0] == 'f'): state.nok_msg()
+        if (cmd[0] == 'g'): print(state.getTransaction(cmd[1:3]))
+        if (cmd[0] == 'h'): print(str(protocol.highest_trn()))
+        if (cmd[0] == 'm'): print(protocol.highest_trn_res(protocol.highest_trn()))
+        if (cmd[0] == 'n'): protocol.newTrans(cmd)
+        if (cmd[0] == 'o'): state.ok_msg()
         
         #ETX
         if (etx == '3'): connected=False
@@ -46,16 +55,25 @@ def handleUserActions(clientsocket, address):
     
 #Protocol design (i): Require username argument. 
 def inputUsername():
-    usr = input("Enter your username: ")
+    state.currentUser = input("Enter your username ('00' = Genesis): ")
 
-    if(len(usr) < 2 or len(usr) > 2):
+    if(len(state.currentUser) < 2 or len(state.currentUser) > 2):
         print("Invalid username input. ") 
         sys.exit()
 
+def selectConfiguration():
+    #Questions
+    state.genesis = input("Create new genesis block(s)? (y/n): ")
+    if (state.genesis == 'y'):
+        miner.init()
+    state.consensusMechanism = input("Enter preferred Consensus Mechanism (\"pow\" or \"pos\"): ")
+    state.model = input("Enter preferred Model \"db\" or \"utxo\"): ")
+    state.encoding = input("Enter preferred encoding method (\"json\" or \"byte\"): ")
+
+selectConfiguration()
+
 #Load servers and ports
 seedNodes = loadSeedNodes()
-
-usr = inputUsername()
 
 #Create socket, bind and listen. 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -65,12 +83,19 @@ print(f'Listening on {seedNodes.IP[0]}:{seedNodes.Port[0]}')
 
 #Receive messages.
 while True:
-    state.init()
+    init()
     clientsocket, address = s.accept()
+
     #Broadcast message
     scheduleNextMessage(clientsocket, address)
 
     #Thread connections from clients
-    thread = threading.Thread(target=handleUserActions, args=(clientsocket, address))
-    thread.start()
-
+    thread1 = threading.Thread(target=handleUserActions, args=(clientsocket, address))
+    #thread2 = threading.Thread(target=handleUserActions, args=(clientsocket, address))
+    #thread3 = threading.Thread(target=handleUserActions, args=(clientsocket, address))
+    #thread4 = threading.Thread(target=handleUserActions, args=(clientsocket, address))
+    
+    thread1.start()
+    #thread2.start()
+    #thread3.start()
+    #thread4.start()

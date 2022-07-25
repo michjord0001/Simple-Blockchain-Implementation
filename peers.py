@@ -1,3 +1,4 @@
+#External Modules
 import socket
 import pandas
 
@@ -31,6 +32,6 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((seedNodes.IP[0], seedNodes.Port[0]))
 
 #processIncomingMessages()
+usr = input("Enter username: ")
 cmd = input("Enter cmd: ")
 broadcastMessage(cmd) 
-
